@@ -5,7 +5,7 @@ O "Achados & Perdidos" é uma aplicação web (API Python/Flask) com banco de da
 
 ## Arquitetura do Sistema (Artefato A2)
 
-A arquitetura completa do sistema conteinerizado, incluindo delimitação de fronteiras de rede (`rede_interna`), mapeamento de portas publicadas, contêineres (`web` e `db`), volumes e bind mounts, está documentada de forma isolada com diagrama Mermaid em:
+A arquitetura completa do sistema conteinerizado, incluindo delimitação de fronteiras de rede (`rede_interna`), roteamento via proxy reverso Nginx, contêineres (`web`, `db`, `nginx` e `adminer`), volumes e bind mounts, está documentada de forma isolada com diagrama Mermaid em:
 
 👉 **[docs/arquitetura.md](docs/arquitetura.md)**
 
@@ -29,22 +29,29 @@ Para construir a imagem da aplicação e iniciar todos os serviços em segundo p
 ```bash
 docker compose up -d --build
 ```
-*Aguarde alguns segundos até que o terminal indique que o banco de dados está `Healthy` e a aplicação web está `Started`.*
+*Aguarde alguns segundos até que o terminal indique que o banco de dados está `Healthy`, a aplicação web está `Started` e o proxy reverso Nginx está `Started`.*
 
 ### 2. Testar o ambiente
-Você pode testar se a API está no ar rodando o healthcheck:
+Você pode testar se a API está no ar rodando o healthcheck através do Nginx:
 ```bash
 curl http://localhost:8080/health
 ```
 
-### 3. Parar o ambiente
+### 3. Modo de Depuração / Painel Adminer (Desafio Bônus)
+Para iniciar o ambiente incluindo o painel de gerenciamento visual do PostgreSQL (Adminer):
+```bash
+docker compose --profile debug up -d
+```
+*Acesse no navegador: `http://localhost:8081` (Sistema: PostgreSQL, Servidor: `db`, Usuário: `aluno`, Base: `achados_db`).*
+
+### 4. Parar o ambiente
 Para desligar os contêineres sem remover as redes e sem apagar os volumes de dados:
 ```bash
 docker compose stop
 ```
 *(Para religar, basta rodar `docker compose start`)*.
 
-### 4. Destruir o ambiente (Reset total)
+### 5. Destruir o ambiente (Reset total)
 Para parar os contêineres, remover a rede interna e **apagar definitivamente** os volumes (destruindo todos os dados do banco e as fotos salvas), execute:
 ```bash
 docker compose down -v
@@ -54,7 +61,7 @@ docker compose down -v
 
 ## Tabela de Rotas da API
 
-A aplicação web roda internamente na porta 5000, mas é mapeada e acessível no Host pela porta **8080**.
+A aplicação web roda internamente na porta 5000 (isolada na rede interna), sendo roteada e acessível no Host pela porta **8080** através do proxy reverso **Nginx**.
 
 | Método | Rota | Descrição |
 | :--- | :--- | :--- |

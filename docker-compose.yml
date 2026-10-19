@@ -28,9 +28,7 @@ services:
     # controi a imagem usando o Dockerfile da pasta ./app
     build: ./app
     restart: unless-stopped
-    # porta 5000 do container exposta como 8080 no host local
-    ports:
-      - "8080:5000"
+    # Contêiner web sem portas expostas diretamente no host (acessível exclusivamente via proxy reverso Nginx)
     environment:
       - DB_HOST=${DB_HOST}
       - DB_PORT=${DB_PORT}
@@ -47,6 +45,32 @@ services:
     depends_on:
       db:
         condition: service_healthy
+
+  # Desafio Bônus: Proxy Reverso com Nginx
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - rede_interna
+    depends_on:
+      - web
+
+  # Desafio Bônus: Painel Administrativo do Banco (Adminer)
+  adminer:
+    image: adminer
+    restart: unless-stopped
+    profiles:
+      - debug
+    ports:
+      - "8081:8080"
+    networks:
+      - rede_interna
+    depends_on:
+      - db
 
 # declaracao dos volumes nomeados
 volumes:
